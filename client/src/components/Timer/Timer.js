@@ -5,6 +5,7 @@ import ProfileTracker from "../ProfileTracker"
 import FreelancerCard from "../FreelancerCard"
 import freelancers from "../../freelancers.json";
 import { Grid, Row, Col } from "react-bootstrap";
+import Upload from "../Upload";
 
 
 class Timer extends React.Component {
@@ -89,6 +90,7 @@ class Timer extends React.Component {
                         <Row>
 
                             <Col xs={12} sm={12} md={6}>
+                                <Upload id={this.state.user_id} />
                                 <FreelancerCard 
                                     name={freelancers[this.state.user_id].name}
                                     image={"../" + freelancers[this.state.user_id].image}
@@ -99,7 +101,7 @@ class Timer extends React.Component {
 
                             <Col xs={12} sm={12} md={6}>
                                 <ProfileTracker
-                                    key={freelancers[0].id}
+                                    key={freelancers[this.state.user_id].id}
                                     id={freelancers[this.state.user_id].id}
                                     name={freelancers[this.state.user_id].name}
                                     profession={freelancers[this.state.user_id].profession}

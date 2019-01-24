@@ -1,7 +1,7 @@
 const moment = require("moment");
 
 const Sequelize = require("sequelize");
-const sequelize = new Sequelize("mysql:3306/justo");
+const sequelize = new Sequelize("mysql:8889/justo");
 
 var db = require(__dirname + "/../models");
 
