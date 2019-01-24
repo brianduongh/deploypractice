@@ -1,13 +1,6 @@
-const path = require('path');
 const express = require("express");
 const Sequelize = require("sequelize");
 const sequelize = new Sequelize("mysql:8889/justo");
-
-const twilio = require('twilio');
-const AccessToken = twilio.jwt.AccessToken;
-const VideoGrant = AccessToken.VideoGrant;
-
-
 
 var db = require(__dirname + "/models");
 
@@ -26,45 +19,6 @@ const PORT = process.env.PORT || 3001;
 
 var cookieParser = require('cookie-parser');
 app.use(cookieParser());
-
-
-/* -----------------------SCREENSHARE----------------------- */
-
-app.use(function(req, res, next) {
-	res.header("Access-Control-Allow-Origin", "*");
-	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-	next();
-  });
-
-//get the token from screenShare component to call Twilio API
-app.get('/token', function(request, response) {
-	var identity = request.query.identity;
-  
-	// Create an access token which we will sign and return to the client,
-	// containing the grant we just created.
-	var token = new AccessToken(
-		"AC1b03b2bb15c08d4329210934990bb156",
-		"SK822cb9c8fb8234ab3a2f957c2d25e62b",
-		"VmYBts015S1TJIykSScv1EFuxtUPS1C3"
-	);
-  
-	// Assign the generated identity to the token.
-	token.identity = identity;
-  
-	// Grant the access token Twilio Video capabilities.
-	var grant = new VideoGrant();
-	token.addGrant(grant);
-  
-	// Serialize the token to a JWT string and include it in a JSON response.
-	response.send({
-	  identity: identity,
-	  token: token.toJwt()
-	});
-  });
-
-/* This is for multer. */
-app.use(express.static('/uploads'))
-
 
 // Define middleware here
 app.use(express.urlencoded({ extended: true }));
@@ -155,9 +109,7 @@ app.get("/profilePicUpload", function(req, res){
 	res.writeHead(200, {
 		"Content-Type": "text/html"
 	});
-	fs.readFile("./client/src/components/Upload/index.js"
-		// "./testFiles/uploadImage.html"
-		, "utf8", function(err, data) {
+	fs.readFile("./testFiles/uploadImage.html", "utf8", function(err, data) {
 		if (err) throw err;
 		res.write(data);
 		res.end();
@@ -172,40 +124,12 @@ const handleErrorInProfilePicUpload = function(err, res) {
 };
 
 const upload = multer({
-  dest:path.join(__dirname,  "/uploads")
+  dest: "./uploads"
   // You might also want to set some limits: https://github.com/expressjs/multer#limits
 });
 
-app.get('/api/allUsers', function(req,res) {
-  //res.send(true);
-  console.log(false);
-  var cookies = req.cookies;
-	console.log("--------------" + JSON.stringify(cookies) );
-	extractJSONFromRequest(req).then(function(data){
-		db.sessions.find({
-			where: {
-				session_id: bc.hashSync(cookies.session_id, cookies.salt)
-			}
-		}).then(function(session){
-			if(session){
-				db.users.findAll()
-        .then(function(data){
-					res.json({ users: data });
-          // .then(function(newPosting){
-					// 	res.setHeader("Content-Type", "application/json");
-					// 	res.end( JSON.stringify({message: "Successfully created new posting " + JSON.stringify(newPosting) }) );
-					// });
-				});
-			}else{
-				res.setHeader("Content-Type", "application/json");
-				res.end( JSON.stringify({message: "Could not find a user with this session. Try loggin in again if this persists. "}) );
-			}
-		});
-	});
-})
-
 app.post(
-	"/account/:userid",
+	"/upload/:userid",
 	upload.single("file" /* name attribute of <file> element in your form */),
 	function(req, res){
 		const newFileName = (new Date()).getTime();
@@ -219,11 +143,7 @@ app.post(
 						image: newFileName
 					});
 				});
-				console.log(req.path)
-				// res.json({success:true});
-				// res.redirect("/account/" + req.params.userid)
-				res.redirect(req.path)
-
+				res.status(200).contentType("text/plain").end("File uploaded!");
 			});
 		} else {
 			fs.unlink(tempPath, err => {
@@ -231,7 +151,7 @@ app.post(
 				res
 					.status(403)
 					.contentType("text/plain")
-					.end("Only .png files allowed");
+					.end("Only .png files are allowed!");
 			});
 		}
 	}
@@ -260,7 +180,7 @@ app.post("/api/attemptLogin", function(req, res){
 					}).then(function(sess){
 						res.writeHead(200, {
 							"Set-Cookie": [
-								"session_id=" + sessionId + "; HttpOnly;  path=/;",
+								"session_id=" + sessionId + "; HttpOnly;  path=/;", 
 								"salt=" + salt + "; HttpOnly;  path=/;"
 							],
 							"Content-Type": "application/json"
@@ -279,27 +199,6 @@ app.post("/api/attemptLogin", function(req, res){
 	});
 });
 
-/* This adds a new user to the database. */
-app.post("/api/newUser", function(req, res){
-	var cookies = req.cookies;
-	extractJSONFromRequest(req).then(function(data){
-		db.users.create({
-			first_name:      data.first_name,
-			last_name:       data.last_name,
-			email:           data.email,
-			password:        bc.hashSync(data.password),
-			image:           data.image,
-			user_type:       data.user_type,
-			user_rate:       data.user_rate || null,
-			user_profession: data.user_profession || null,
-			user_title:      data.user_title || null
-		}).then(function(newUser){
-			res.setHeader("Content-Type", "application/json");
-			res.end( JSON.stringify({message: "Successfully created new user " + JSON.stringify(newUser) }) );
-		});
-	});
-});
-
 /* This is what allows users to log out. */
 app.post("/api/logout", function(req, res){
 	var cookies = req.cookies;
@@ -309,6 +208,7 @@ app.post("/api/logout", function(req, res){
 		}
 	}).then(function(destroyed){
 		res.setHeader("Content-Type", "application/json");
+		console.log("---------------" + JSON.stringify(destroyed) );
 		if(destroyed){
 			res.end( JSON.stringify({message: "Logged user " + destroyed.session_id + " out."}) );
 		}else{
@@ -320,6 +220,7 @@ app.post("/api/logout", function(req, res){
 /* This allows users to create new postings in their name. */
 app.post("/api/newPosting", function(req, res){
 	var cookies = req.cookies;
+	console.log("--------------" + JSON.stringify(cookies) );
 	extractJSONFromRequest(req).then(function(data){
 		db.sessions.find({
 			where: {
@@ -333,7 +234,11 @@ app.post("/api/newPosting", function(req, res){
 					}
 				}).then(function(user){
 					db.postings.create({
-						posting_owner: data.posting_owner
+						posting_title: data.posting_title,
+						posting_type:  data.posting_type,
+						posting_desc:  data.posting_desc,
+						posting_completion_deadline: moment(data.posting_completion_deadline).format("YYYY-MM-DD"),
+						posting_owner: user.id
 					}).then(function(newPosting){
 						res.setHeader("Content-Type", "application/json");
 						res.end( JSON.stringify({message: "Successfully created new posting " + JSON.stringify(newPosting) }) );
@@ -347,83 +252,48 @@ app.post("/api/newPosting", function(req, res){
 	});
 });
 
-app.post("/api/newJob", function(req, res){
+/* This adds a new user to the database. */
+app.post("/api/newUser", function(req, res){
 	var cookies = req.cookies;
 	extractJSONFromRequest(req).then(function(data){
-		db.sessions.find({
-			where: {
-				session_id: bc.hashSync(cookies.session_id, cookies.salt)
-			}
-		}).then(function(session){
-			if(session){
-				db.users.find({
-					where: {
-						id: session.session_user_id
-					}
-				}).then(function(user){
-					db.jobs.create({
-						job_hours:    data.job_hours,
-						posting:      data.posting,
-						job_employee: user.id
-					}).then(function(newJob){
-						res.end( JSON.stringify({message: "Successfully created new job " + JSON.stringify(newJob) }) );
-					});
-				});
-			}else{
-				res.setHeader("Content-Type", "application/json");
-				res.end( JSON.stringify({message: "Could not find a user with this session. Try loggin in again if this persists. "}) );
-			}
+		db.users.create({
+			first_name: data.first_name,
+			last_name:  data.last_name,
+			email:      data.email,
+			password:   bc.hashSync(data.password)
+		}).then(function(newUser){
+			res.setHeader("Content-Type", "application/json");
+			res.end( JSON.stringify({message: "Successfully created new user " + JSON.stringify(newUser) }) );
 		});
 	});
 });
 
-app.post("/api/requestInfoOnUser", function(req, res){
+/* This creates a new bid in the users name for whatever posting they are viewing. */
+app.post("/api/newBid", function(req, res){
 	var cookies = req.cookies;
 	extractJSONFromRequest(req).then(function(data){
-		db.sessions.find({
-			where: {
-				session_id: bc.hashSync(cookies.session_id, cookies.salt)
-			}
-		}).then(function(session){
-			if(session){
-				db.users.find({
-					where: {
-						id: session.session_user_id
-					}
-				}).then(function(user){
-					if(user.user_type === "employer"){
-						db.users.find({
-							where: {
-								user_type: "employee"
-							}
-						}).then(function(requestedUsers){
-							for(let i in requestedUsers){
-								requestedUsers[i].password = "None of your business";
-							}
-							res.setHeader("Content-Type", "application/json");
-							res.end( JSON.stringify(requestedUsers) );
-						});
-					}else if(user.user_type === "employee"){
-						db.users.find({
-							where: {
-								user_type: "employer"
-							}
-						}).then(function(requestedUsers){
-							for(let i in requestedUsers){
-								requestedUsers[i].password = "None of your business";
-							}
-							res.setHeader("Content-Type", "application/json");
-							res.end( JSON.stringify(requestedUsers) );
-						});
-					}else{
+		if(cookies.session_id){
+			db.sessions.find({
+				where: {
+					session_id: bc.hashSync(cookies.session_id, cookies.salt)
+				}
+			}).then(function(session){
+				if(session){
+					db.bids.create({
+						employee_rate: data.employee_rate,
+						notes:  data.notes,
+						deadline: moment(data.deadline).format("YYYY-MM-DD"),
+						posting: data.posting,
+						employee: session.session_user_id
+					}).then(function(newBid){
 						res.setHeader("Content-Type", "application/json");
-						res.end( JSON.stringify({message: "Could not do what you requested because you are neither an employer nor employee. Are you Neo? "}) );
-					}
-				});
-			}else{
-				res.setHeader("Content-Type", "application/json");
-				res.end( JSON.stringify({message: "Could not find a user with this session. Try loggin in again if this persists. "}) );
-			}
-		});
+						res.end( JSON.stringify({message: "Successfully created new bid " + JSON.stringify(newBid) }) );
+					});
+				}else{
+					res.setHeader("Content-Type", "application/json");
+					res.end( JSON.stringify({message: "Sorry, but it looks like you are not logged in right now. If this problem persists, consider logging out and logging in again before attempting this again. Sorry for the inconvenience." }) );
+				}
+			});
+		}
 	});
 });

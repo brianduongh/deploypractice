@@ -7,7 +7,7 @@ function ShowAccount(props) {
 	return (
     	<div>
         <Navs page ="Account"/>
-				<Timer id={props.match.params.id} />
+		<Timer id={props.match.params.id} />
     	</div>
   	);
 }

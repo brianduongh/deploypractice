@@ -18,32 +18,17 @@ module.exports = function(sequelize, DataTypes) {
     },
     email: {
       type: DataTypes.STRING(255),
-      allowNull: false
-    },
-    password: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      allowNull: false,
+      unique: true
     },
     image: {
       type: DataTypes.STRING(255),
       allowNull: true
     },
-    user_type: {
+		password: {
       type: DataTypes.STRING(255),
-      allowNull: true
+      allowNull: false
     },
-    user_rate: {
-      type: "DOUBLE",
-      allowNull: true
-    },
-    user_profession: {
-      type: DataTypes.STRING(255),
-      allowNull: true
-    },
-    user_title: {
-      type: DataTypes.STRING(255),
-      allowNull: true
-    }
   }, {
     tableName: 'users',
 		timestamps: false
