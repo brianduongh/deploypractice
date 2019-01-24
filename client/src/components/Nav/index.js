@@ -34,6 +34,8 @@ function Navs(props){
 				</Navbar>
 			</div>
 		)
+	// }
+// }
 }
 
 export default Navs;

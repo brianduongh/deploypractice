@@ -14,7 +14,7 @@ function ProfileForms(props) {
                 <Grid>
                     <Row>
                         <Col style={{ paddingBottom:"20px"}} xs={12} sm={12} md={6}>
-                            <ProfileCard
+                            <ProfileCard 
                                 image={"../" + freelancers[props.id].image}
                             />
                         </Col>
