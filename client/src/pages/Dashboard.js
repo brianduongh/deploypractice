@@ -3,14 +3,13 @@ import React, { Component } from "react";
 import Wrapper from "../components/Wrapper";
 import FreelancerCard from "../components/FreelancerCard";
 import AddUser from "../components/AddUser";
-import freelancers from "../freelancers.json";
 import { Grid, Row } from "react-bootstrap";
 import axios from 'axios';
 
 class Dashboard extends Component {
 
     state ={
-      freelancers
+      freelancers: []
     }
 
     showPeople = id => {
@@ -57,7 +56,7 @@ class Dashboard extends Component {
                                     id={freelancer.id}
                                     first_name={freelancer.first_name}
                                     last_name={freelancer.last_name}
-                                    image="images/user.png"
+                                    image={freelancer.image}
                                     active={freelancer.active}
                                     showPeople={this.showPeople}
                                 />

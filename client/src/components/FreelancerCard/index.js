@@ -3,7 +3,6 @@ import "./style.css";
 import { Image, Label } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
-
 function FreelancerCard(props) {
 
 

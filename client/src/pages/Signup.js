@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { FormGroup, FormControl, Button } from 'react-bootstrap';
+import { FormGroup, FormControl, Button, Radio } from 'react-bootstrap';
 import axios from 'axios';
 
 class Signup extends Component {
@@ -7,7 +7,9 @@ class Signup extends Component {
     first_name: '',
     last_name: '',
     email: '',
-    password: ''
+    password: '',
+    image: '',
+    selectedOption: 'employer'
   }
 
   handleChange = key => (event) => {
@@ -15,14 +17,23 @@ class Signup extends Component {
     this.setState({ [key]: value });
   }
 
+  handleOptionChange = event => {
+    this.setState({
+      selectedOption: event.target.value
+    });
+    console.log(this.state.selectedOption)
+  }
+
   handleSubmit = event => {
     event.preventDefault();
-    const { email, password, first_name, last_name } = this.state;
+    const { email, password, first_name, last_name, selectedOption, image } = this.state;
     axios.post('/api/newUser', {
       first_name: first_name,
       last_name: last_name,
       email: email,
-      password: password
+      password: password,
+      user_type: selectedOption,
+      image: image
     })
       .then(res => {
         console.log(res);
@@ -32,7 +43,7 @@ class Signup extends Component {
   }
 
   render() {
-    const { email, password, first_name, last_name } = this.state;
+    const { email, password, first_name, last_name, image, selectedOption } = this.state;
     return(
       <div className="login-page">
         <form onSubmit={this.handleSubmit}>
@@ -68,6 +79,32 @@ class Signup extends Component {
             value={password}
             onChange={this.handleChange('password')}
               />
+          </FormGroup>
+          <FormGroup>
+            <FormControl
+            type="name"
+            placeholder="image url"
+            value={image}
+            onChange={this.handleChange('image')}
+              />
+          </FormGroup>
+          <FormGroup>
+            <Radio
+            name="radioGroup"
+            value="employer"
+            onChange={this.handleOptionChange}
+            checked={selectedOption === 'employer'}
+            inline>
+              Employer
+            </Radio>{' '}
+            <Radio
+            name="radioGroup"
+            value="employee"
+            onChange={this.handleOptionChange}
+            checked={selectedOption === 'employee'}
+            inline>
+              Employee
+            </Radio>{' '}
           </FormGroup>
           <Button className="justo-button" type="submit">Submit</Button>
         </form>
